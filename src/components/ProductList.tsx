@@ -18,12 +18,25 @@ export default function ProductList() {
   const [loading, setLoading] = useState(true);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
 
+  // Debug effect to log products state changes
+  useEffect(() => {
+    console.log("🔍 ProductList: Products state updated:", {
+      productsLength: products.length,
+      products: products,
+      loading: loading,
+      currentProductIndex: currentProductIndex
+    });
+  }, [products, loading, currentProductIndex]);
+
   useEffect(() => {
     async function loadProducts() {
       console.log("🔄 ProductList: Starting to load products");
       try {
         const data = await fetchProducts();
         console.log("✅ ProductList: Products loaded successfully:", data);
+        console.log("🔍 ProductList: Data type:", typeof data);
+        console.log("🔍 ProductList: Data length:", Array.isArray(data) ? data.length : 'not an array');
+        console.log("🔍 ProductList: First product:", data[0]);
         setProducts(data as Product[]);
       } catch (error) {
         console.error("❌ ProductList: Error loading products:", error);
@@ -112,7 +125,7 @@ export default function ProductList() {
             
             <div className="flex items-center mb-6">
               <span className="text-3xl font-bold text-gray-900">
-                {currentProduct.currencyCode} {currentProduct.price}
+                ${currentProduct.price.toFixed(2)}
               </span>
             </div>
             

@@ -95,11 +95,14 @@ export async function fetchProducts() {
       throw new Error(`API responded with status: ${response.status}`);
     }
     
-    const data = await response.json() as ShopifyResponse;
+    const responseData = await response.json();
     
-    console.log("✅ Shopify Response Received:", data);
+    console.log("✅ Shopify Response Received:", responseData);
     
-    if (!data.products || !data.products.edges) {
+    // Extract the data from the response wrapper
+    const data = responseData.data as ShopifyResponse;
+    
+    if (!data || !data.products || !data.products.edges) {
       console.warn("⚠️ No products found in Shopify response");
       return [];
     }
@@ -124,15 +127,19 @@ export async function fetchProducts() {
           return null;
         }
 
-        return {
+        const processedProduct = {
           id: product.id,
           title: product.title,
           description: product.description || "",
           price: parseFloat(variant.price.amount),
           currencyCode: variant.price.currencyCode,
-          image: image?.url || "/placeholder-product.jpg", // Fallback image
+          image: transformShopifyImageUrl(image?.url),
           altText: image?.altText || product.title
         };
+        
+        console.log(`✅ Processed product ${index + 1}:`, processedProduct);
+        
+        return processedProduct;
       })
       .filter(Boolean); // Remove any null products
 
@@ -150,6 +157,14 @@ export async function fetchProducts() {
     }
     throw error;
   }
+}
+
+// Helper function to transform Shopify CDN URLs
+function transformShopifyImageUrl(url: string): string {
+  if (!url) return "/placeholder-product.jpg";
+  
+  // Since Shopify CDN URLs are already full URLs, just return as is
+  return url;
 }
 
 // Add more functions for cart mutations, etc., using similar GraphQL queries.
