@@ -14,7 +14,7 @@ export default function Cart() {
         <ul>
           {cartItems.map((item) => (
             <li key={item.id}>
-              {item.title} - ${item.price}
+              {item.name} - ${item.price.toFixed(2)}
               <button onClick={() => removeFromCart(item.id)}>Remove</button>
             </li>
           ))}
