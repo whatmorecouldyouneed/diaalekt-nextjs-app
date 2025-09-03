@@ -101,6 +101,7 @@ export async function GET() {
       error: customResponse.ok ? null : `HTTP ${customResponse.status}`
     });
   } catch (error) {
+    const customDomain = shopifyDomain.replace('.myshopify.com', '');
     results.push({
       test: "Custom domain check",
       url: `https://${customDomain}.com`,
