@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Removed static export to enable API routes
+  output: 'export', // Enable static export for GitHub Pages
+  trailingSlash: true, // Required for GitHub Pages
   images: {
-    unoptimized: true, // Keep this for development
+    unoptimized: true, // Required for static export
     domains: ['cdn.shopify.com'], // Allow Shopify CDN images
+  },
+  // Disable server-side features for static export
+  experimental: {
+    appDir: true,
   },
 };
 
