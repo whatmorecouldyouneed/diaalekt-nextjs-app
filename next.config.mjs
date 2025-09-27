@@ -1,11 +1,25 @@
-/** @type {import('next').NextConfig} */
+const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
+
 const nextConfig = {
-  output: 'export', // Enable static export
-  trailingSlash: true, // Good for GitHub Pages
+  reactStrictMode: false,
+  basePath: '',
+  assetPrefix: '',
   images: {
-    unoptimized: true, // Required for static export
-    domains: ['cdn.shopify.com', 'images.unsplash.com'],
+    unoptimized: true,
+    loader: 'default',
+    domains: [
+      'cdn.shopify.com',
+      'shopify.com',
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
+  trailingSlash: false,
+  output: 'export',
 };
 
 export default nextConfig;

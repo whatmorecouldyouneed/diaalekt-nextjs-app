@@ -2,58 +2,60 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  # Build job
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        
+        uses: actions/checkout@v3
+
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Debug Environment Variables
+        run: |
+          echo "Checking Firebase config variables..."
+          echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID exists: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID != '' }}"
+          echo "NEXT_PUBLIC_FIREBASE_API_KEY exists: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY != '' }}"
+          echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN exists: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN != '' }}"
+          echo "Checking Shopify config variables..."
+          echo "NEXT_PUBLIC_SHOPIFY_DOMAIN exists: ${{ secrets.NEXT_PUBLIC_SHOPIFY_DOMAIN != '' }}"
+          echo "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN exists: ${{ secrets.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN != '' }}"
+
+      - name: Create .env.production
+        run: |
+          cat << EOF > .env.production
+          NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          NEXT_PUBLIC_SHOPIFY_DOMAIN=${{ secrets.NEXT_PUBLIC_SHOPIFY_DOMAIN }}
+          NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN=${{ secrets.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN }}
+          EOF
           
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-        
+          # verify the .env.production file was created with the correct values
+          echo "Verifying .env.production file..."
+          echo "NEXT_PUBLIC_SHOPIFY_DOMAIN in .env.production: $(grep NEXT_PUBLIC_SHOPIFY_DOMAIN .env.production)"
+          echo "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN exists in .env.production: $(grep NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN .env.production | wc -l)"
+
       - name: Build
         run: yarn build
-        
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-        
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
 
-  # Deployment job
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: out
+          token: ${{ secrets.GH_PAGES_TOKEN }}
