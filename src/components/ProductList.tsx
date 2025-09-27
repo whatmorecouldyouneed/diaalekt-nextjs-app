@@ -13,9 +13,13 @@ interface Product {
   altText: string;
 }
 
-export default function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+interface ProductListProps {
+  initialProducts?: Product[];
+}
+
+export default function ProductList({ initialProducts = [] }: ProductListProps) {
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loading, setLoading] = useState(initialProducts.length === 0);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
 
   // Debug effect to log products state changes
@@ -29,6 +33,12 @@ export default function ProductList() {
   }, [products, loading, currentProductIndex]);
 
   useEffect(() => {
+    // Only fetch products if we don't have initial products
+    if (initialProducts.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     async function loadProducts() {
       console.log("🔄 ProductList: Starting to load products");
       try {
@@ -47,7 +57,7 @@ export default function ProductList() {
       }
     }
     loadProducts();
-  }, []);
+  }, [initialProducts.length]);
 
   const goToNext = () => {
     if (products.length === 0) return;

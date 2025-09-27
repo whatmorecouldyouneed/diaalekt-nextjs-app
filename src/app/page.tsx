@@ -1,6 +1,13 @@
 import ProductList from "@/components/ProductList";
+import { fetchProducts } from "@/lib/shopify";
 
-export default function Home() {
+export default async function Home() {
+  // Fetch products at build time for static generation
+  const products = await fetchProducts();
+  
+  // Filter out any null values and ensure type safety
+  const validProducts = products.filter((product): product is NonNullable<typeof product> => product !== null);
+
   return (
     <main className="min-h-screen bg-gray-50 py-12 px-4">
       <div className="max-w-7xl mx-auto">
@@ -13,7 +20,7 @@ export default function Home() {
           </p>
         </div>
         
-        <ProductList />
+        <ProductList initialProducts={validProducts} />
       </div>
     </main>
   );
