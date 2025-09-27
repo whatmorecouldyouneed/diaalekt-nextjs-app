@@ -34,31 +34,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Debug Environment Variables
-        run: |
-          echo "Checking Shopify config variables..."
-          echo "NEXT_PUBLIC_SHOPIFY_DOMAIN exists: ${{ secrets.NEXT_PUBLIC_SHOPIFY_DOMAIN != '' }}"
-          echo "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN exists: ${{ secrets.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN != '' }}"
-
-      - name: Create .env.production
-        run: |
-          cat << EOF > .env.production
-          NEXT_PUBLIC_SHOPIFY_DOMAIN=${{ secrets.NEXT_PUBLIC_SHOPIFY_DOMAIN }}
-          NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN=${{ secrets.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN }}
-          EOF
-          
-          # verify the .env.production file was created with the correct values
-          echo "Verifying .env.production file..."
-          echo "NEXT_PUBLIC_SHOPIFY_DOMAIN in .env.production: $(grep NEXT_PUBLIC_SHOPIFY_DOMAIN .env.production)"
-          echo "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN exists in .env.production: $(grep NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN .env.production | wc -l)"
         
       - name: Build
-        run: |
-          echo "🔍 Environment variables check before build:"
-          echo "NEXT_PUBLIC_SHOPIFY_DOMAIN: ${NEXT_PUBLIC_SHOPIFY_DOMAIN:-'NOT SET'}"
-          echo "NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN: ${NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN:-'NOT SET'}"
-          echo "Starting build process..."
-          yarn build
+        run: yarn build
         env:
           GITHUB_ACTIONS: true
           NEXT_PUBLIC_SHOPIFY_DOMAIN: ${{ secrets.NEXT_PUBLIC_SHOPIFY_DOMAIN }}

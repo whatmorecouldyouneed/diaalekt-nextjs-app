@@ -1,22 +1,7 @@
 import { GraphQLClient, gql } from "graphql-request";
 
-// Check if environment variables are available
 const shopifyDomain = process.env.NEXT_PUBLIC_SHOPIFY_DOMAIN;
 const shopifyToken = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
-
-console.log("🔍 Environment Variables Check:", {
-  shopifyDomain,
-  shopifyToken: shopifyToken ? `${shopifyToken.substring(0, 10)}...` : "NOT SET",
-  nodeEnv: process.env.NODE_ENV,
-  allEnvKeys: Object.keys(process.env).filter(key => key.includes('SHOPIFY'))
-});
-
-if (!shopifyDomain || !shopifyToken) {
-  console.error("❌ Missing Shopify environment variables:", {
-    domain: shopifyDomain,
-    hasToken: !!shopifyToken
-  });
-}
 
 // Type definitions for Shopify response
 interface ShopifyProduct {
@@ -84,17 +69,11 @@ const PRODUCTS_QUERY = gql`
 `;
 
 export async function fetchProducts() {
-  console.log("🚀 Starting fetchProducts function");
-  
-  // Check if we have the required environment variables
   if (!shopifyDomain || !shopifyToken) {
-    console.warn("⚠️ Missing Shopify environment variables, returning mock data");
     return getMockProducts();
   }
   
   try {
-    console.log("📡 Making direct request to Shopify...");
-    
     const client = new GraphQLClient(`https://${shopifyDomain}/api/2023-10/graphql.json`, {
       headers: {
         'X-Shopify-Storefront-Access-Token': shopifyToken,
@@ -104,34 +83,21 @@ export async function fetchProducts() {
     
     const data = await client.request<ShopifyResponse>(PRODUCTS_QUERY);
     
-    console.log("✅ Shopify Response Received:", data);
-    
     if (!data || !data.products || !data.products.edges) {
-      console.warn("⚠️ No products found in Shopify response");
       return getMockProducts();
     }
 
-    console.log(`📦 Found ${data.products.edges.length} products`);
-
     const processedProducts = data.products.edges
-      .map((edge, index) => {
+      .map((edge) => {
         const product = edge.node;
         const variant = product.variants?.edges?.[0]?.node;
         const image = product.images?.edges?.[0]?.node;
         
-        console.log(`🔍 Processing product ${index + 1}:`, {
-          title: product.title,
-          hasVariant: !!variant,
-          hasImage: !!image,
-          variantPrice: variant?.price?.amount
-        });
-        
         if (!variant || !variant.price) {
-          console.warn(`⚠️ Product ${product.title} has no valid variant or price`);
           return null;
         }
 
-        const processedProduct = {
+        return {
           id: product.id,
           title: product.title,
           description: product.description || "",
@@ -140,39 +106,22 @@ export async function fetchProducts() {
           image: transformShopifyImageUrl(image?.url),
           altText: image?.altText || product.title
         };
-        
-        console.log(`✅ Processed product ${index + 1}:`, processedProduct);
-        
-        return processedProduct;
       })
-      .filter(Boolean); // Remove any null products
+      .filter(Boolean);
 
-    console.log(`✅ Successfully processed ${processedProducts.length} products`);
     return processedProducts.length > 0 ? processedProducts : getMockProducts();
     
   } catch (error) {
-    console.error("❌ Error fetching products from Shopify:", error);
-    if (error instanceof Error) {
-      console.error("🔍 Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-    }
-    // Return mock products as fallback
+    console.error("Error fetching products from Shopify:", error);
     return getMockProducts();
   }
 }
 
-// Helper function to transform Shopify CDN URLs
 function transformShopifyImageUrl(url: string): string {
   if (!url) return "/placeholder-product.jpg";
-  
-  // Since Shopify CDN URLs are already full URLs, just return as is
   return url;
 }
 
-// Mock products for fallback when Shopify is not available
 function getMockProducts() {
   return [
     {
@@ -204,6 +153,3 @@ function getMockProducts() {
     }
   ];
 }
-
-// Add more functions for cart mutations, etc., using similar GraphQL queries.
-
