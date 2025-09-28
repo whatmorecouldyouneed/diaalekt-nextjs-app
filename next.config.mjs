@@ -1,10 +1,9 @@
 const isGithubActions = process.env.GITHUB_ACTIONS === 'true';
-const isCustomDomain = process.env.CUSTOM_DOMAIN === 'true';
 
 const nextConfig = {
   reactStrictMode: false,
-  basePath: (isGithubActions && !isCustomDomain) ? '/diaalekt-nextjs-app' : '',
-  assetPrefix: (isGithubActions && !isCustomDomain) ? '/diaalekt-nextjs-app' : '',
+  basePath: '',
+  assetPrefix: '',
   images: {
     unoptimized: true,
     loader: 'default',
